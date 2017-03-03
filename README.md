@@ -3,6 +3,8 @@
 This is repository that builds Docker Image with all scripts needed to
 deploy to Kubernetes from GitLab CI.
 
+It is used to give the [GitLab Demo](https://about.gitlab.com/handbook/sales/demo/) which contains detailed instructions to reproduce.
+
 It basically consist of two stages:
 1. Build stage where a Docker Image is built,
 2. Deploy stage where a previously built Docker Image is run on Kubernetes and
