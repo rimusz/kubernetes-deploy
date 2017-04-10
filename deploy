@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -40,23 +40,56 @@ kubectl create secret -n $KUBE_NAMESPACE \
   --docker-email="$GITLAB_USER_EMAIL" \
   -o yaml --dry-run | kubectl apply -n $KUBE_NAMESPACE -f -
 
+track="${1-stable}"
+name="$CI_ENVIRONMENT_SLUG"
+
+if [[ "$track" != "stable" ]]; then
+  name="$name-$track"
+fi
+
+replicas="1"
+
+env_track="${track^^}"
+env_slug="${CI_ENVIRONMENT_SLUG//-/_}"
+env_slug="${env_slug^^}"
+
+if [[ "$track" == "stable" ]]; then
+  # for stable track get number of replicas from `PRODUCTION_REPLICAS`
+  eval new_replicas=\$${env_slug}_REPLICAS
+  if [[ -n "$new_replicas" ]]; then
+    replicas="$new_replicas"
+  fi
+else
+  # for all tracks get number of replicas from `CANARY_PRODUCTION_REPLICAS`
+  eval new_replicas=\$${env_track}_${env_slug}_REPLICAS
+  if [[ -n "$new_replicas" ]]; then
+    replicas="$new_replicas"
+  fi
+fi
+
+echo "Deploying $CI_ENVIRONMENT_SLUG (track: $track, replicas: $replicas) with $CI_REGISTRY_IMAGE:$CI_REGISTRY_TAG..."
+
 cat <<EOF | kubectl apply -n $KUBE_NAMESPACE -f -
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: $CI_ENVIRONMENT_SLUG
+  name: $name
   namespace: $KUBE_NAMESPACE
   labels:
     app: $CI_ENVIRONMENT_SLUG
+    track: "$track"
     pipeline_id: "$CI_PIPELINE_ID"
     build_id: "$CI_BUILD_ID"
+    tier: web
 spec:
-  replicas: 1
+  replicas: $replicas
   template:
     metadata:
       labels:
-        name: $CI_ENVIRONMENT_SLUG
+        name: $name
+        track: "$track"
         app: $CI_ENVIRONMENT_SLUG
+        tier: web
     spec:
       imagePullSecrets:
       - name: gitlab-registry
@@ -100,7 +133,8 @@ spec:
       port: 5000
       targetPort: web
   selector:
-    name: $CI_ENVIRONMENT_SLUG
+    app: $CI_ENVIRONMENT_SLUG
+    tier: frontend
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -131,6 +165,11 @@ EOF
 
 echo "Waiting for deployment..."
 kubectl rollout status -n "$KUBE_NAMESPACE" -w "deployment/$CI_ENVIRONMENT_SLUG"
+
+if [[ "$track" == "stable" ]]; then
+  echo "Removing canary deployments (if found)..."
+  kubectl delete all,ing -l "app=$CI_ENVIRONMENT_SLUG" -l "track=canary" -n "$KUBE_NAMESPACE"
+fi
 
 echo "Application is accessible at: ${CI_ENVIRONMENT_URL}"
 echo ""

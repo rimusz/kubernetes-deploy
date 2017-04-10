@@ -30,6 +30,7 @@ ENV PATH=/opt/kubernetes-deploy:$PATH
 COPY / /opt/kubernetes-deploy/
 RUN ln -s /opt/kubernetes-deploy/run /usr/bin/deploy && \
   which deploy && \
+  which canary && \
   which build && \
   which destroy
 
