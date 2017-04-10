@@ -32,6 +32,14 @@ metadata:
   name: $KUBE_NAMESPACE
 EOF
 
+kubectl create secret -n $KUBE_NAMESPACE \
+  docker-registry gitlab-registry \
+  --docker-server="$CI_REGISTRY" \
+  --docker-username=gitlab-ci-token \
+  --docker-password="$CI_BUILD_TOKEN" \
+  --docker-email="$GITLAB_USER_EMAIL" \
+  -o yaml --dry-run | kubectl apply -n $KUBE_NAMESPACE -f -
+
 cat <<EOF | kubectl apply -n $KUBE_NAMESPACE -f -
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -50,6 +58,8 @@ spec:
         name: $CI_ENVIRONMENT_SLUG
         app: $CI_ENVIRONMENT_SLUG
     spec:
+      imagePullSecrets:
+      - name: gitlab-registry
       containers:
       - name: app
         image: $CI_REGISTRY_IMAGE:$CI_REGISTRY_TAG
