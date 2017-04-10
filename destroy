@@ -14,4 +14,4 @@ source "$DEPLOY_ROOT_DIR/src/common.bash"
 create_kubeconfig
 
 echo "Removing all pods..."
-kubectl delete all -l "app=$CI_ENVIRONMENT_SLUG" -n "$KUBE_NAMESPACE"
+kubectl delete all,ing -l "app=$CI_ENVIRONMENT_SLUG" -n "$KUBE_NAMESPACE"
