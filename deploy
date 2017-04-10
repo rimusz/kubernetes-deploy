@@ -81,8 +81,8 @@ spec:
     metadata:
       labels:
         name: $name
-        track: "$track"
         app: $CI_ENVIRONMENT_SLUG
+        track: "$track"
         tier: web
     spec:
       imagePullSecrets:
@@ -128,7 +128,7 @@ spec:
       targetPort: web
   selector:
     app: $CI_ENVIRONMENT_SLUG
-    tier: frontend
+    tier: web
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -158,7 +158,7 @@ spec:
 EOF
 
 echo "Waiting for deployment..."
-kubectl rollout status -n "$KUBE_NAMESPACE" -w "deployment/$CI_ENVIRONMENT_SLUG"
+kubectl rollout status -n "$KUBE_NAMESPACE" -w "deployment/$name"
 
 if [[ "$track" == "stable" ]]; then
   echo "Removing canary deployments (if found)..."
