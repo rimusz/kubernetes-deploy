@@ -47,6 +47,12 @@ env_track="${track^^}"
 env_slug="${CI_ENVIRONMENT_SLUG//-/_}"
 env_slug="${env_slug^^}"
 
+POSTGRES_USER="${POSTGRES_USER:-user}"
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-password}"
+POSTGRES_DB="${POSTGRES_DB:-$env_slug}"
+
+postgres_name="${CI_ENVIRONMENT_SLUG}-postgres"
+
 if [[ "$track" == "stable" ]]; then
   # for stable track get number of replicas from `PRODUCTION_REPLICAS`
   eval new_replicas=\$${env_slug}_REPLICAS
@@ -96,6 +102,8 @@ spec:
           value: "$CI_PIPELINE_ID"
         - name: CI_BUILD_ID
           value: "$CI_BUILD_ID"
+        - name: DATABASE_URL
+          value: "postgres://${CI_ENVIRONMENT_SLUG}-postgres:5432/$POSTGRES_DB/"
         ports:
         - name: web
           containerPort: 5000
@@ -111,6 +119,40 @@ spec:
             port: 5000
           initialDelaySeconds: 5
           timeoutSeconds: 3
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: $postgres_name
+  namespace: $KUBE_NAMESPACE
+  labels:
+    app: $CI_ENVIRONMENT_SLUG
+    tier: database
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: $postgres_name
+        app: $CI_ENVIRONMENT_SLUG
+        tier: database
+    spec:
+      imagePullSecrets:
+      - name: gitlab-registry
+      containers:
+      - name: app
+        image: postgres:9.6-alpine
+        imagePullPolicy: Always
+        env:
+        - name: POSTGRES_USER
+          value: "$POSTGRES_USER"
+        - name: POSTGRES_PASSWORD
+          value: "$POSTGRES_PASSWORD"
+        - name: POSTGRES_DB
+          value: "$POSTGRES_DB"
+        ports:
+        - name: postgres
+          containerPort: 5432
 ---
 apiVersion: v1
 kind: Service
@@ -129,6 +171,22 @@ spec:
   selector:
     app: $CI_ENVIRONMENT_SLUG
     tier: web
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${CI_ENVIRONMENT_SLUG}-postgres
+  namespace: $KUBE_NAMESPACE
+  labels:
+    app: $CI_ENVIRONMENT_SLUG
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+  selector:
+    app: $CI_ENVIRONMENT_SLUG
+    tier: postgres
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
