@@ -71,7 +71,7 @@ if [[ -z "$DISABLE_POSTGRES" ]]; then
   POSTGRES_DB="${POSTGRES_DB:-$env_slug}"
   DATABASE_URL="postgres://${postgres_name}:5432/$POSTGRES_DB/"
 
-  cat <<EOF | kubectl apply -n $KUBE_NAMESPACE -f -
+  cat <<EOF | kubectl apply -n $KUBE_NAMESPACE --force -f -
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -128,7 +128,7 @@ EOF
 fi
 
 echo "Deploying $CI_ENVIRONMENT_SLUG (track: $track, replicas: $replicas) with $CI_REGISTRY_IMAGE:$CI_REGISTRY_TAG..."
-cat <<EOF | kubectl apply -n $KUBE_NAMESPACE -f -
+cat <<EOF | kubectl apply -n $KUBE_NAMESPACE --force -f -
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
