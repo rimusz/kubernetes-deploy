@@ -24,8 +24,15 @@ The build script does:
 
 The deploy script does:
 1. Create a new namespace if does not exist already,
-2. Deploy an application with most recent Docker Image,
-3. Create or update ingress to expose the application under hostname.
+1. Deploy Postgres database with preconfigured username, password and database name,
+1. Deploy an application with most recent Docker Image,
+1. Create or update ingress to expose the application under hostname.
+
+### PostgreSQL support
+
+During deployment automatically `PostgreSQL` is provisioned unless `DISABLE_POSTGRES` is specified.
+We currently use preconfigured credentials. These credentials are used for defining `DATABASE_URL`
+of format: `postgres://user:password@postgres-host:postgres-port/postgres-database`.
 
 ### Requirements
 
@@ -35,12 +42,16 @@ The deploy script does:
 
 ### Limitations
 
-1. Only public docker images can be deployed,
-2. There is no ability to pass environment variables to deployed application,
-3. Currently we do not have a way to watch for deployment status and make sure
-   that deployment did succeed,
-4. Currently we do not have a way to expose `mysql`, `postgres` or other database
-   services.
+1. Public and private docker images can be deployed, but credentials are accessible during deployment,
+1. There is no ability to pass environment variables to deployed application,
+1. Provisioned database uses immutable storage: all data will be lost after container restart,
+
+### Variables
+
+1. `DISABLE_POSTGRES: "yes"`: disable automatic deployment of PostgreSQL,
+1. `POSTGRES_USER: "my-user"`: use custom username for PostgreSQL,
+1. `POSTGRES_PASSWORD: "password"`: use custom password for PostgreSQL,
+1. `POSTGRES_DB: "my database"`: use custom database name for PostgreSQL,
 
 ### Examples
 
@@ -60,4 +71,4 @@ copy-paste [this `.gitlab-ci.yml`](https://gitlab.com/gitlab-org/gitlab-ci-yml/b
 
 ### License
 
-MIT, GitLab, 2016
+MIT, GitLab, 2016-2017
