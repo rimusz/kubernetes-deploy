@@ -69,6 +69,11 @@ You can then start using your own docker image hosted on your Container Registry
 Basically, configure Kubernetes Service in your project settings and
 copy-paste [this `.gitlab-ci.yml`](https://gitlab.com/gitlab-org/gitlab-ci-yml/blob/master/autodeploy/Kubernetes.gitlab-ci.yml).
 
+### Remarks
+
+This project uses latest version of `kubectl` in order to fix problems with `kubectl rollout status`.
+As of today it is `v1.7.0-alpha-3`.
+
 ### License
 
 MIT, GitLab, 2016-2017
