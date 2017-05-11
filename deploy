@@ -165,17 +165,17 @@ spec:
           value: "$DATABASE_URL"
         ports:
         - name: web
-          containerPort: 5000
+          containerPort: $CI_PORT
         livenessProbe:
           httpGet:
             path: /
-            port: 5000
+            port: $CI_PORT
           initialDelaySeconds: 15
           timeoutSeconds: 15
         readinessProbe:
           httpGet:
             path: /
-            port: 5000
+            port: $CI_PORT
           initialDelaySeconds: 5
           timeoutSeconds: 3
 ---
@@ -191,7 +191,7 @@ metadata:
 spec:
   ports:
     - name: web
-      port: 5000
+      port: $CI_PORT
       targetPort: web
   selector:
     app: $CI_ENVIRONMENT_SLUG
@@ -221,7 +221,7 @@ spec:
       - path: /
         backend:
           serviceName: $CI_ENVIRONMENT_SLUG
-          servicePort: 5000
+          servicePort: $CI_PORT
 EOF
 
 echo "Waiting for deployment..."
