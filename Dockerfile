@@ -11,14 +11,9 @@ RUN apk add -U curl tar gzip bash ca-certificates && \
 RUN apk add ruby git
 
 # Install Helm
-#RUN curl https://kubernetes-helm.storage.googleapis.com/helm-v2.0.2-linux-amd64.tar.gz | \
-#  tar zx && mv linux-amd64/helm /usr/bin/ && \
-#  helm version --client
-
-## Install Helm Canary
-#RUN curl https://kubernetes-helm.storage.googleapis.com/helm-canary-linux-amd64.tar.gz | \
-#  tar zx && mv linux-amd64/helm /usr/bin/ && \
-#  helm version --client
+RUN curl https://kubernetes-helm.storage.googleapis.com/helm-v2.4.1-linux-amd64.tar.gz | \
+  tar zx && mv linux-amd64/helm /usr/bin/ && \
+  helm version --client
 
 # Install kubectl
 RUN curl -L -o /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/latest.txt)/bin/linux/amd64/kubectl && \
